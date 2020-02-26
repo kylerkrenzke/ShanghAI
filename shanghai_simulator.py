@@ -163,6 +163,7 @@ class Shanghai:
         dup = deepcopy(self)
         if cmdlst[0] == "draw" and self.curstage == "draw":
             if cmdlst[1] == "draw":
+		dup.drawPile.shuffle()
                 card = dup.drawPile.pop(0)
                 dup.players[dup.curplayer].hand.put(card)
                 dup.curstage = "play"
