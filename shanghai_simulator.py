@@ -93,11 +93,12 @@ class Shanghai:
         self.curplayer = 0
         self.curstage = "draw"
         
-        # initialization
+        # deck initialization
         self.drawPile.shuffle()
         for i in range(11):
             for player in self.players:
                 player.hand.put(self.drawPile.pop(0))
+	self.discardPile.put(self.drawPile.pop(0))
                 
     def __str__(self):
         ret = "Draw: " + str(self.drawPile) + "\n"
