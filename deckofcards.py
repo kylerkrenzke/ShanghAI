@@ -1,3 +1,5 @@
+import random
+
 class Card:
     ranks = ("ace","2","3","4","5","6","7","8","9","T","J","Q","K")
     suits = ("clubs","diamonds","hearts","spades")

@@ -1,4 +1,3 @@
-import random
 import sys
 
 from copy import deepcopy
@@ -23,8 +22,9 @@ class Shanghai:
         self.drawPile = DoubleDeck()
         self.discardPile = Pile([])
         self.players = [Player() for i in range(nplayers)]
+        self.curstage = "buy"
+        self.curaction = 0
         self.curplayer = 0
-        self.curstage = "draw"
         
         # deck initialization
         self.drawPile.shuffle()
@@ -65,36 +65,38 @@ class Shanghai:
         else: return int(index)
         
     def getPossibleActions(self):
-        if self.curstage == "draw":
-            lst = []
-            if len(self.discardPile) > 0:
+        lst = []
+        if self.curstage == "buy":
+            if self.curplayer == self.curaction: 
                 lst.append(("draw","discard"),)
+            else: lst.append(("buy"),)
+        elif self.curstage == "draw":
             lst.append(("draw","draw"),)
-            return lst
+            lst.append(("draw","discard"),)
         elif self.curstage == "play":
-            indexes = [self.indexmap[i] for i in range(len(self.__curhand()))]
-            iterable = combinations(indexes, 3)
-            lst = []
-            for iter in iterable:
-                c1 = iter[0]
-                c2 = iter[1]
-                c3 = iter[2]
-                if self.__curhand()[self.__decodeIndex(c1)] == self.__curhand()[self.__decodeIndex(c2)] and self.__curhand()[self.__decodeIndex(c2)] == self.__curhand()[self.__decodeIndex(c3)]:
-                    lst.append(("meld",str(c1)+str(c2)+str(c3)),)
             for i in range(len(self.players[self.curplayer].hand)):
                 lst.append(("discard", str(i)),)
-                
             if self.__curplayer().down:
                 for player in range(len(self.players)):
                     for meld in range(len(self.players[player].melds)):
                         for card in range(len(self.__curhand())):
                             if self.__curhand()[card].rank == self.players[player].melds[meld][0].rank:
                                 lst.append(("build",str(player)+str(meld)+str(self.indexmap[card])),)
-            return tuple(lst)
+            else:
+                indexes = [self.indexmap[i] for i in range(len(self.__curhand()))]
+                iterable = combinations(indexes, 3)
+                lst = []
+                for iter in iterable:
+                    c1 = iter[0]
+                    c2 = iter[1]
+                    c3 = iter[2]
+                    if self.__curhand()[self.__decodeIndex(c1)] == self.__curhand()[self.__decodeIndex(c2)] and self.__curhand()[self.__decodeIndex(c2)] == self.__curhand()[self.__decodeIndex(c3)]:
+                        lst.append(("meld",str(c1)+str(c2)+str(c3)),)
+        return tuple(lst)
             
     def takeAction(self, cmdlst):
         dup = deepcopy(self)
-        if cmdlst[0] == "draw" and self.curstage == "draw":
+        if cmdlst[0] == "draw":
             if cmdlst[1] == "draw":
                 dup.drawPile.shuffle()
                 card = dup.drawPile.pop(0)
@@ -125,8 +127,12 @@ class Shanghai:
             dup.players[int(cmdlst[1][0])].melds[int(cmdlst[1][1])].put(card)
         elif cmdlst[0] == "fringe":
             print(dup.getPossibleActions())
+        elif  cmdlst[0] == "buy":
+            last = len(self.discardPile) - 1
+            self.__curhand().put(self.discardPile.pop(last))
+            for i in range(2): self.__curhand().put(self.drawPile.pop(0))
         else:
-            raise ValueError(cmdlst[0])
+            raise SyntaxError(cmdlst[0])
             
         if dup.curplayer == len(dup.players):
             dup.curplayer = 0
