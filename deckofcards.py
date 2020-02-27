@@ -1,23 +1,25 @@
 import random
+from copy import deepcopy
+from itertools import combinations
 
 class Card:
-    ranks = ("ace","2","3","4","5","6","7","8","9","T","J","Q","K")
-    suits = ("clubs","diamonds","hearts","spades")
+    __ranks = ("ace","2","3","4","5","6","7","8","9","T","J","Q","K")
+    __suits = ("clubs","diamonds","hearts","spades")
 
     def __init__(self, rank, suit):
-        self.rank = rank
-        self.suit = suit
+        self.__rank = rank
+        self.__suit = suit
         
     def __lt__(self, other):
-        if self.suit == other.suit:
-            return self.rank < other.rank
-        return self.suit < other.suit
+        if self.__suit == other.__suit:
+            return self.__rank < other.__rank
+        return self.__suit < other.__suit
         
     def __eq__(self, other):
-        return self.rank == other.rank
+        return self.__rank == other.__rank
         
     def __str__(self):
-        return self.ranks[self.rank-1] + " of "+ self.suits[self.suit]
+        return self.__ranks[self.__rank-1] + " of "+ self.__suits[self.__suit]
         
 class Pile:
     def __init__(self, initial):
@@ -58,6 +60,42 @@ class Pile:
         for i in range(len(self.cards)-1, 0, -1):
             j = random.randint(0, i)
             self.cards[i], self.cards[j] = self.cards[j], self.cards[i]
+            
+class Hand(Pile):
+    indexmap = ("0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g")
+    
+    def __init__(self):
+        Pile.__init__(self, [])
+        
+    def __decodeIndex(self, index):
+        if index == "a": return 10
+        elif index == "b": return 11
+        elif index == "c": return 12
+        elif index == "d": return 13
+        elif index == "e": return 14
+        elif index == "f": return 15
+        elif index == "g": return 16
+        else: return int(index)
+        return self.cards[val]
+        
+    def __getCard(self, index):
+        return self.cards[self.__decodeIndex(index)]
+        
+    def findSets(self, size):
+        set_lst = []
+        index_lst = [self.indexmap[i] for i in range(len(self.cards))]
+        all_combos = combinations(index_lst, size) # sequence of all combos of hand's indexes
+        for combo in all_combos:
+            if self.__getCard(combo[0]) == self.__getCard(combo[1]) == self.__getCard(combo[2]):
+                set_lst.append(combo[0]+combo[1]+combo[2])
+        
+        return tuple(set_lst)
+        
+    def without(self, str_indexes):
+        dup = deepcopy(self)
+        for char in reversed(str_indexes):
+            dup.cards.pop(dup.__decodeIndex(char))
+        return dup
         
 class DoubleDeck(Pile):
     def __init__(self):
@@ -70,11 +108,16 @@ class DoubleDeck(Pile):
                     lst.append(Card(rank, suit))
         Pile.__init__(self, lst)
         
+class Meld(Pile):
+    def __init__(self, initial):
+        Pile.__init__(self, initial)
         
+    def canAcceptCard(self, card):
+        raise NotImplementedError()
         
 class SetMeld(Pile):
     def __init__(self, initial):
-        Pile.__init__(initial)
+        Meld.__init__(self, initial)
         
     def canAcceptCard(self, card):
         return card.rank == self.cards[0].rank
